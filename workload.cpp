@@ -351,6 +351,7 @@ inline void exec(int wl,
 
   std::cout << "\033[1;32m";
   std::cout << "insert " << tput << "\033[0m" << "\n";
+  std::cout << "time: " << end_time - start_time << "\n";
 
   // Only execute consolidation if BwTree delta chain is used
 #ifdef BWTREE_CONSOLIDATE_AFTER_INSERT
@@ -556,6 +557,7 @@ void run_rdtsc_benchmark(int index_type, int thread_num, int key_num) {
   
   double tput = key_num * 1.0 / (end_time - start_time) / 1000000; //Mops/sec
   std::cout << "insert " << tput << "\n";
+  std::cout << "time: " << end_time - start_time << "\n";
 
   return;
 }
@@ -628,7 +630,7 @@ int main(int argc, char *argv[]) {
   
   // Then read number of threads using command line
   int num_thread = atoi(argv[4]);
-  if(num_thread < 1 || num_thread > 40) {
+  if(num_thread < 1 || num_thread > 100) {
     fprintf(stderr, "Do not support %d threads\n", num_thread);
     exit(1);
   } else {

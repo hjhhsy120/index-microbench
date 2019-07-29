@@ -14,7 +14,7 @@
 #ifndef _MICROBENCH_H
 #define _MICROBENCH_H
 
-#define INIT_LIMIT 50000000
+#define INIT_LIMIT 1000000000
 #define LIMIT 10000000
 
 //#define PAPI_IPC 1

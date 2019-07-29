@@ -1,3 +1,4 @@
+#define MYGENERICKEYSIZE 32
 
 #define BTREE_SLOWER_LAYOUT
 
@@ -49,12 +50,12 @@ class Index
   virtual void UpdateThreadLocal(size_t thread_num) = 0;
   virtual void AssignGCID(size_t thread_id) = 0;
   virtual void UnregisterThread(size_t thread_id) = 0;
-  
+
   // After insert phase perform this action
   // By default it is empty
   // This will be called in the main thread
   virtual void AfterLoadCallback() {}
-  
+
   // This is called after threads finish but before the thread local are
   // destroied by the thread manager
   virtual void CollectStatisticalCounter(int) {}
@@ -103,7 +104,7 @@ class BTreeRTMIndex : public Index<KeyType, KeyComparator>
   }
 
   void incKey(uint64_t& key) { key++; };
-  void incKey(GenericKey<31>& key) { key.data[strlen(key.data)-1]++; };
+  void incKey(GenericKey<MYGENERICKEYSIZE>& key) { key.data[strlen(key.data)-1]++; };
 
   uint64_t scan(KeyType key, int range, threadinfo *ti) {
     return 0;
@@ -144,7 +145,7 @@ class SkipListIndex : public Index<KeyType, KeyComparator> {
   }
 
   /*
-   * Destructor - We need to stop the background thread and also to 
+   * Destructor - We need to stop the background thread and also to
    *              free the index object
    */
   ~SkipListIndex() {
@@ -192,24 +193,24 @@ class SkipListIndex : public Index<KeyType, KeyComparator> {
   int64_t getMemory() const {
     return 0L;
   }
-  
+
   // Returns the size of the skiplist
   size_t GetIndexSize() {
     return (size_t)set_size(set, 1);
   }
-  
+
   // Not actually used
   void UpdateThreadLocal(size_t thread_num) { (void)thread_num; }
 
   // Before thread starts we set the steps to 0
-  void AssignGCID(size_t thread_id) { 
-    (void)thread_id; 
-    skiplist_steps = 0L; 
+  void AssignGCID(size_t thread_id) {
+    (void)thread_id;
+    skiplist_steps = 0L;
   }
 
   // Before thread exits we aggregate the steps into the global counter
-  void UnregisterThread(size_t thread_id) { 
-    (void)thread_id; 
+  void UnregisterThread(size_t thread_id) {
+    (void)thread_id;
     skiplist_total_steps.fetch_add(skiplist_steps);
     return;
   }
@@ -233,7 +234,7 @@ class ArtOLCIndex : public Index<KeyType, KeyComparator>
   void UnregisterThread(size_t thread_id) {}
 
   void setKey(Key& k, uint64_t key) { k.setInt(key); }
-  void setKey(Key& k, GenericKey<31> key) { k.set(key.data,31); }
+  void setKey(Key& k, GenericKey<MYGENERICKEYSIZE> key) { k.set((char*)key.data,MYGENERICKEYSIZE); }
 
   bool insert(KeyType key, uint64_t value, threadinfo *ti) {
     auto t = idx->getThreadInfo();
@@ -281,12 +282,12 @@ class ArtOLCIndex : public Index<KeyType, KeyComparator>
       idx = new ART_OLC::Tree([](TID tid, Key &key) { key.setInt(*reinterpret_cast<uint64_t*>(tid)); });
       maxKey.setInt(~0ull);
     } else {
-      idx = new ART_OLC::Tree([](TID tid, Key &key) { key.set(reinterpret_cast<char*>(tid),31); });
+      idx = new ART_OLC::Tree([](TID tid, Key &key) { key.set(reinterpret_cast<char*>(tid),MYGENERICKEYSIZE); });
       uint8_t m[] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
 		     0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
 		     0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
 		     0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
-      maxKey.set((char*)m,31);
+      maxKey.set((char*)m,MYGENERICKEYSIZE);
     }
   }
 
@@ -326,7 +327,7 @@ class BTreeOLCIndex : public Index<KeyType, KeyComparator>
   }
 
   void incKey(uint64_t& key) { key++; };
-  void incKey(GenericKey<31>& key) { key.data[strlen(key.data)-1]++; };
+  void incKey(GenericKey<MYGENERICKEYSIZE>& key) { key.data[strlen((char *)key.data)-1]++; };
 
   uint64_t scan(KeyType key, int range, threadinfo *ti) {
     uint64_t results[range];
@@ -359,7 +360,7 @@ class BTreeOLCIndex : public Index<KeyType, KeyComparator>
   btreeolc::BTree<KeyType,uint64_t> idx;
 };
 
-template<typename KeyType, 
+template<typename KeyType,
          typename KeyComparator,
          typename KeyEqualityChecker=std::equal_to<KeyType>,
          typename KeyHashFunc=std::hash<KeyType>>
@@ -392,10 +393,10 @@ class BwTreeIndex : public Index<KeyType, KeyComparator>
     static constexpr int counter_count = \
       BwTreeBase::GCMetaData::CounterType::COUNTER_COUNT;
     int counters[counter_count];
-    
+
     // Aggregate on the array of counters
     memset(counters, 0x00, sizeof(counters));
-    
+
     for(int i = 0;i < thread_num;i++) {
       for(int j = 0;j < counter_count;j++) {
         counters[j] += index_p->GetGCMetaData(i)->counters[j];
@@ -409,11 +410,11 @@ class BwTreeIndex : public Index<KeyType, KeyComparator>
               BwTreeBase::GCMetaData::COUNTER_NAME_LIST[j],
               counters[j]);
     }
-    
+
     return;
   }
 #endif
-  
+
   void AfterLoadCallback() {
     int inner_depth_total = 0,
         leaf_depth_total = 0,
@@ -422,7 +423,7 @@ class BwTreeIndex : public Index<KeyType, KeyComparator>
     int inner_size_total = 0, leaf_size_total = 0;
     size_t inner_alloc_total = 0, inner_used_total = 0;
     size_t leaf_alloc_total = 0, leaf_used_total = 0;
-   
+
     uint64_t index_root_id = index_p->root_id.load();
     fprintf(stderr, "BwTree - Start consolidating delta chains...\n");
     int ret = index_p->DebugConsolidateAllRecursive(
@@ -438,7 +439,7 @@ class BwTreeIndex : public Index<KeyType, KeyComparator>
       &leaf_alloc_total,
       &leaf_used_total);
     fprintf(stderr, "BwTree - Finished consolidating %d delta chains\n", ret);
-   
+
     fprintf(stderr,
             "    Inner Avg. Depth: %f (%d / %d)\n",
             (double)inner_depth_total / (double)inner_node_total,
@@ -459,13 +460,13 @@ class BwTreeIndex : public Index<KeyType, KeyComparator>
             (double)leaf_size_total / (double)leaf_node_total,
             leaf_size_total,
             leaf_node_total);
-    
+
     fprintf(stderr,
             "Inner Alloc. Util: %f (%lu / %lu)\n",
             (double)inner_used_total / (double)inner_alloc_total,
             inner_used_total,
             inner_alloc_total);
-    
+
     fprintf(stderr,
             "Leaf Alloc. Util: %f (%lu / %lu)\n",
             (double)leaf_used_total / (double)leaf_alloc_total,
@@ -483,17 +484,17 @@ class BwTreeIndex : public Index<KeyType, KeyComparator>
 #endif
     return;
   }
-  
-  void UpdateThreadLocal(size_t thread_num) { 
-    index_p->UpdateThreadLocal(thread_num); 
+
+  void UpdateThreadLocal(size_t thread_num) {
+    index_p->UpdateThreadLocal(thread_num);
   }
-  
+
   void AssignGCID(size_t thread_id) {
-    index_p->AssignGCID(thread_id); 
+    index_p->AssignGCID(thread_id);
   }
-  
+
   void UnregisterThread(size_t thread_id) {
-    index_p->UnregisterThread(thread_id); 
+    index_p->UnregisterThread(thread_id);
   }
 
   bool insert(KeyType key, uint64_t value, threadinfo *) {
@@ -524,7 +525,7 @@ class BwTreeIndex : public Index<KeyType, KeyComparator>
   bool upsert(KeyType key, uint64_t value, threadinfo *) {
     //index_p->Delete(key, value);
     //index_p->Insert(key, value);
-    
+
     index_p->Upsert(key, value);
 
     return true;
@@ -579,10 +580,10 @@ class MassTreeIndex : public Index<KeyType, KeyComparator>
     i = __bswap_64(i);
   }
 
-  inline void swap_endian(GenericKey<31> &) {
+  inline void swap_endian(GenericKey<MYGENERICKEYSIZE> &) {
     return;
   }
-  
+
   void UpdateThreadLocal(size_t thread_num) {}
   void AssignGCID(size_t thread_id) {}
   void UnregisterThread(size_t thread_id) {}

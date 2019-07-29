@@ -5,13 +5,13 @@
 thread_local long skiplist_steps = 0;
 std::atomic<long> skiplist_total_steps;
 
-typedef GenericKey<31> keytype;
-typedef GenericComparator<31> keycomp;
+typedef GenericKey<MYGENERICKEYSIZE> keytype;
+typedef GenericComparator<MYGENERICKEYSIZE> keycomp;
 
 extern bool hyperthreading;
 
-using KeyEuqalityChecker = GenericEqualityChecker<31>;
-using KeyHashFunc = GenericHasher<31>;
+using KeyEuqalityChecker = GenericEqualityChecker<MYGENERICKEYSIZE>;
+using KeyHashFunc = GenericHasher<MYGENERICKEYSIZE>;
 
 static const uint64_t key_type=0;
 static const uint64_t value_type=1; // 0 = random pointers, 1 = pointers to keys
@@ -49,18 +49,18 @@ size_t MemUsage() {
 //==============================================================
 // LOAD
 //==============================================================
-inline void load(int wl, 
-                 int kt, 
-                 int index_type, 
-                 std::vector<keytype> &init_keys, 
-                 std::vector<keytype> &keys, 
-                 std::vector<uint64_t> &values, 
-                 std::vector<int> &ranges, 
+inline void load(int wl,
+                 int kt,
+                 int index_type,
+                 std::vector<keytype> &init_keys,
+                 std::vector<keytype> &keys,
+                 std::vector<uint64_t> &values,
+                 std::vector<int> &ranges,
                  std::vector<int> &ops) {
   std::string init_file;
   std::string txn_file;
 
-  // If we do not use the 27MB file then use old set of files; Otherwise 
+  // If we do not use the 27MB file then use old set of files; Otherwise
   // use 27 MB email workload
 #ifndef USE_27MB_FILE
   // 0 = a, 1 = c, 2 = e
@@ -184,13 +184,13 @@ inline void load(int wl,
 //==============================================================
 // EXEC
 //==============================================================
-inline void exec(int wl, 
-                 int index_type, 
-                 int num_thread, 
-                 std::vector<keytype> &init_keys, 
-                 std::vector<keytype> &keys, 
-                 std::vector<uint64_t> &values, 
-                 std::vector<int> &ranges, 
+inline void exec(int wl,
+                 int index_type,
+                 int num_thread,
+                 std::vector<keytype> &init_keys,
+                 std::vector<keytype> &keys,
+                 std::vector<uint64_t> &values,
+                 std::vector<int> &ranges,
                  std::vector<int> &ops) {
 
   Index<keytype, keycomp> *idx = \
@@ -229,7 +229,7 @@ inline void exec(int wl,
   if(index_type == TYPE_SKIPLIST) {
     fprintf(stderr, "SkipList size = %lu\n", idx->GetIndexSize());
   }
-  
+
   std::cout << "\033[1;32m";
   std::cout << "insert " << tput;
   std::cout << "\033[0m" << "\n";
@@ -250,7 +250,7 @@ inline void exec(int wl,
   long long ins;
   int retval;
 
-  if((retval = PAPI_ipc(&real_time, &proc_time, &ins, &ipc)) < PAPI_OK) {    
+  if((retval = PAPI_ipc(&real_time, &proc_time, &ins, &ipc)) < PAPI_OK) {
     printf("PAPI error: retval: %d\n", retval);
     exit(1);
   }
@@ -289,7 +289,7 @@ inline void exec(int wl,
     v.reserve(10);
 
     threadinfo *ti = threadinfo::make(threadinfo::TI_MAIN, -1);
-    
+
     int counter = 0;
     for(size_t i = start_index;i < end_index;i++) {
       int op = ops[i];
@@ -324,7 +324,7 @@ inline void exec(int wl,
   end_time = get_now();
 
 #ifdef PAPI_IPC
-  if((retval = PAPI_ipc(&real_time, &proc_time, &ins, &ipc)) < PAPI_OK) {    
+  if((retval = PAPI_ipc(&real_time, &proc_time, &ins, &ipc)) < PAPI_OK) {
     printf("PAPI error: retval: %d\n", retval);
     exit(1);
   }
@@ -350,7 +350,7 @@ inline void exec(int wl,
 
   std::cout << "\033[1;31m";
 
-  if (wl == WORKLOAD_A) {  
+  if (wl == WORKLOAD_A) {
     std::cout << "read/update " << (tput + (sum - sum));
   }
   else if (wl == WORKLOAD_C) {
@@ -412,13 +412,13 @@ int main(int argc, char *argv[]) {
     index_type = TYPE_ARTOLC;
   } else if (strcmp(argv[3], "btreeolc") == 0) {
     index_type = TYPE_BTREEOLC;
-  } else if (strcmp(argv[3], "skiplist") == 0) { 
+  } else if (strcmp(argv[3], "skiplist") == 0) {
     index_type = TYPE_SKIPLIST;
   } else {
     fprintf(stderr, "Unknown index type: %d\n", index_type);
     exit(1);
-  } 
- 
+  }
+
   // Then read number of threads using command line
   int num_thread = atoi(argv[4]);
   if(num_thread < 1 || num_thread > 40) {
@@ -458,7 +458,7 @@ int main(int argc, char *argv[]) {
 
 #ifdef USE_27MB_FILE
   fprintf(stderr, "  Using 27MB workload file\n");
-#endif 
+#endif
 
   if(repeat_counter != 1) {
     fprintf(stderr, "  We run the workload part for %d times\n", repeat_counter);

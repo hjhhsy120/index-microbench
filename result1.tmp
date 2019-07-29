@@ -1,0 +1,22 @@
+Detected a hypervisor/virtualization technology. Some metrics might not be available due to configuration or availability of virtual hardware features.
+PCM error: package C-states support array is not initialized. Package C-states metrics will not be shown.
+PCM error: core C-states support array is not initialized. Core C-states metrics will not be shown.
+Number of physical cores: 1
+Number of logical cores: 1
+Number of online logical cores: 1
+Threads (logical cores) per physical core: 1
+Num sockets: 1
+Physical cores per socket: 1
+Core PMU (perfmon) version: 1
+Number of core PMU generic (programmable) counters: 4
+Width of generic (programmable) counters: 48 bits
+Can not access CPUs Model Specific Registers (MSRs).
+Try to execute 'modprobe msr' as root user and then
+you also must have read and write permissions for /dev/cpu/*/msr devices (/dev/msr* for Android). The 'chown' command can help.
+Number of threads: 1
+  BwTree will collect statistics
+Leaf delta chain threshold: 24; Inner delta chain threshold: 2
+  BTree element pair count: 255
+Loaded 5592406 keys
+terminate called after throwing an instance of 'std::bad_alloc'
+  what():  std::bad_alloc

@@ -52,16 +52,16 @@ template<typename KeyType,
 Index<KeyType, KeyComparator> *getInstance(const int type, const uint64_t kt) {
   if (type == TYPE_BWTREE)
     return new BwTreeIndex<KeyType, KeyComparator, KeyEuqal, KeyHash>(kt);
-  else if (type == TYPE_MASSTREE)
-    return new MassTreeIndex<KeyType, KeyComparator>(kt);
-  else if (type == TYPE_ARTOLC)
-      return new ArtOLCIndex<KeyType, KeyComparator>(kt);
+//  else if (type == TYPE_MASSTREE)
+//    return new MassTreeIndex<KeyType, KeyComparator>(kt);
+//  else if (type == TYPE_ARTOLC)
+//      return new ArtOLCIndex<KeyType, KeyComparator>(kt);
   else if (type == TYPE_BTREEOLC)
     return new BTreeOLCIndex<KeyType, KeyComparator>(kt);
-  else if (type == TYPE_SKIPLIST)
-    return new SkipListIndex<KeyType, KeyComparator>(kt);
-  else if (type == TYPE_BTREERTM)
-    return new BTreeRTMIndex<KeyType, KeyComparator>(kt);
+//  else if (type == TYPE_SKIPLIST)
+//    return new SkipListIndex<KeyType, KeyComparator>(kt);
+//  else if (type == TYPE_BTREERTM)
+//    return new BTreeRTMIndex<KeyType, KeyComparator>(kt);
   else {
     fprintf(stderr, "Unknown index type: %d\n", type);
     exit(1);
@@ -90,24 +90,33 @@ inline uint64_t Rdtsc()
 // This is the order of allocation
 
 static int core_alloc_map_hyper[] = {
-  0, 2, 4, 6, 8, 10, 12, 14, 16, 18,
-  20, 22, 24, 26, 28, 30, 32, 34, 36, 38,
-  1, 3, 5, 7 ,9, 11, 13, 15, 17, 19,
-  21, 23, 25, 27, 29, 31, 33, 35, 37, 39,  
+  0, 2, 4, 6, 8, 10, 12, 14, 16,
+37, 39, 41, 43, 45, 47, 49, 51, 53,
+1, 3, 5, 7, 9, 11, 13, 15, 17,
+36, 38, 40, 42, 44, 46, 48, 50, 52,
+18, 20, 22, 24, 26, 28, 30, 32, 34,
+55, 57, 59, 61, 63, 65, 67, 69, 71,
+19, 21, 23, 25, 27, 29, 31, 33, 35,
+54, 56, 58, 60, 62, 64, 66, 68, 70
 };
 
 
 static int core_alloc_map_numa[] = {
-  0, 2, 4, 6, 8, 10, 12, 14, 16, 18,
-  1, 3, 5, 7 ,9, 11, 13, 15, 17, 19,
-  20, 22, 24, 26, 28, 30, 32, 34, 36, 38,
-  21, 23, 25, 27, 29, 31, 33, 35, 37, 39,  
+  0, 2, 4, 6, 8, 10, 12, 14, 16,
+37, 39, 41, 43, 45, 47, 49, 51, 53,
+1, 3, 5, 7, 9, 11, 13, 15, 17,
+36, 38, 40, 42, 44, 46, 48, 50, 52,
+18, 20, 22, 24, 26, 28, 30, 32, 34,
+55, 57, 59, 61, 63, 65, 67, 69, 71,
+19, 21, 23, 25, 27, 29, 31, 33, 35,
+54, 56, 58, 60, 62, 64, 66, 68, 70
 };
 
 
-constexpr static size_t MAX_CORE_NUM = 40;
+constexpr static size_t MAX_CORE_NUM = 72;
 
 inline void PinToCore(size_t thread_id) {
+  return;
   cpu_set_t cpu_set;
   CPU_ZERO(&cpu_set);
 
